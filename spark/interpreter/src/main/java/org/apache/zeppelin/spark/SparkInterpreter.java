@@ -81,8 +81,16 @@ public class SparkInterpreter extends AbstractInterpreter {
     try {
       SparkConf conf = new SparkConf();
       for (Map.Entry<Object, Object> entry : getProperties().entrySet()) {
-        if (!StringUtils.isBlank(entry.getValue().toString())) {
-          conf.set(entry.getKey().toString(), entry.getValue().toString());
+        String key = entry.getKey().toString();
+        String value = entry.getValue().toString();
+
+        if (!StringUtils.isBlank(value)) {
+          conf.set(key, value);
+        } else {
+          // empty couchbase config
+          if (key.startsWith("com.couchbase") || key.startsWith("spark.couchbase")) {
+            conf.set(key, "");
+          }
         }
         // zeppelin.spark.useHiveContext & zeppelin.spark.concurrentSQL are legacy zeppelin
         // properties, convert them to spark properties here.
@@ -90,7 +98,7 @@ public class SparkInterpreter extends AbstractInterpreter {
           conf.set("spark.useHiveContext", entry.getValue().toString());
         }
         if (entry.getKey().toString().equals("zeppelin.spark.concurrentSQL")
-            && entry.getValue().toString().equals("true")) {
+                && entry.getValue().toString().equals("true")) {
           conf.set("spark.scheduler.mode", "FAIR");
         }
       }
